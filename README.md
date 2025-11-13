@@ -48,7 +48,7 @@ npm install
 
 2. Set up environment variables (create `.env` file):
 ```env
-DATABASE_URL="mysql://root:FSdzfssxIRdInukHiBOEcSkcNMsRUNLn@switchback.proxy.rlwy.net:24042/railway"
+DATABASE_URL= Please message Jan Fontanilla on teams for the database url
 NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
