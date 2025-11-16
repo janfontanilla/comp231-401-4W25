@@ -1,0 +1,10 @@
+.primary-text {
+    color: orangered;
+}
+
+.homepage-container {
+    min-height: calc(100vh - 72px - 69px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -58,6 +58,13 @@ model Card {
   @@index([listId])
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+}
+
 enum ACTION {
   CREATE
   UPDATE
