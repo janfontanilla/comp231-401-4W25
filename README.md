@@ -1,4 +1,5 @@
 # MyTracker
+
 COMP231 Software Development Project 1 Group 4 Project
 
 ## Project Structure
@@ -11,6 +12,7 @@ COMP231 Software Development Project 1 Group 4 Project
 - `/lib` - Utility functions and configurations
 
 ## Description
+
 Fullstack NextJs 14 MyTracker app allowing users to create boards with lists and cards that can speed up process of developing software or just to create notes. This app allows users to organize lists and cards using the Drag n' Drop feature.
 
 ## Tech stack
@@ -42,11 +44,13 @@ See [SETUP.md](./SETUP.md) for detailed setup instructions.
 ### Quick Start
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Set up environment variables (create `.env` file):
+
 ```env
 DATABASE_URL= Please message Jan Fontanilla on teams for the database url
 NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
@@ -56,12 +60,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 3. Run database migrations:
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
 4. Start development server:
+
 ```bash
 npm run dev
 ```
@@ -84,3 +90,22 @@ The application will be available at `http://localhost:3000`
 - Percy Osunde (301185959)
 - Saeed Herzi (301317522)
 - Jan Rafael Fontanilla (301380907)
+
+## Running the Project Locally
+
+1. Clone the Repository
+   git clone https://github.com/janfontanilla/comp231-401-4W25.git
+   cd comp231-401-4W25
+2. Install Dependencies
+   npm install
+3. Set Up the Database
+   The project uses MySQL. Ensure MySQL is installed and running on your system.
+   a. Create a new database: CREATE DATABASE mytracker;
+
+   b. Update the DATABASE_URL inside /prisma/.env: DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3307/mytracker"
+
+   c. Apply Prisma Migrations: npx prisma migrate dev --name init
+
+   d. Run the Application: npm run dev
+
+   e. Your application will be accessible at: http://localhost:3000
