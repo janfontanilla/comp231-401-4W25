@@ -111,7 +111,7 @@ If you prefer to use a local MySQL database:
 1. Make sure your MySQL server is running
 2. Update your `.env` with:
    ```env
-   DATABASE_URL="mysql://root:password@localhost:3306/trello_clone"
+   DATABASE_URL="mysql://root:password@localhost:3306/mytracker"
    ```
 3. Run migrations:
    ```bash
