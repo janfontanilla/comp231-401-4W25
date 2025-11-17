@@ -6,6 +6,9 @@ Fullstack Next.js 14 application that lets users create boards, lists, and cards
 
 ## Project Structure
 
+## Description
+
+Fullstack NextJs 14 MyTracker app allowing users to create boards with lists and cards that can speed up process of developing software or just to create notes. This app allows users to organize lists and cards using the Drag n' Drop feature.
 - `/app` – Next.js 14 app directory and routes
 - `/frontend` – Marketing/homepage assets
 - `/prisma` – Prisma schema and migrations
@@ -43,10 +46,13 @@ Fullstack Next.js 14 application that lets users create boards, lists, and cards
 
 ### 1. Install Dependencies
 
+1. Install dependencies:
+
 ```bash
 npm install
 ```
 
+2. Set up environment variables (create `.env` file):
 `postinstall` automatically runs `prisma generate`.
 
 ### 2. Configure Environment Variables
@@ -77,20 +83,14 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 4. Paste that string into `DATABASE_URL` in `.env`.
 5. Sync the schema:
 
+3. Run database migrations:
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
-Prefer migrations?
-
-```bash
-npx prisma migrate deploy
-
-npx prisma migrate dev
-```
-
-### 4. Run the Dev Server
+4. Start development server:
 
 ```bash
 npm run dev
@@ -132,3 +132,22 @@ npm start
 - Ryan Massey (301107847)
 - Percy Osunde (301185959)
 - Jan Rafael Fontanilla (301380907)
+
+## Running the Project Locally
+
+1. Clone the Repository
+   git clone https://github.com/janfontanilla/comp231-401-4W25.git
+   cd comp231-401-4W25
+2. Install Dependencies
+   npm install
+3. Set Up the Database
+   The project uses MySQL. Ensure MySQL is installed and running on your system.
+   a. Create a new database: CREATE DATABASE mytracker;
+
+   b. Update the DATABASE_URL inside /prisma/.env: DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3307/mytracker"
+
+   c. Apply Prisma Migrations: npx prisma migrate dev --name init
+
+   d. Run the Application: npm run dev
+
+   e. Your application will be accessible at: http://localhost:3000
