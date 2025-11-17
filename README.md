@@ -2,7 +2,7 @@
 
 COMP231 Software Development Project 1 Group 4 Project
 
-Fullstack Next.js 14 application that lets users create boards, lists, and cards for project planning or quick note organization. Drag-and-drop interactions make reordering effortless. Authentication (Clerk) and payments (Stripe) have been removed—everything runs publicly without logins or billing.
+Fullstack Next.js 14 application that lets users create boards, lists, and cards for project planning or quick note organization. Drag-and-drop interactions make reordering effortless. 
 
 ## Project Structure
 
@@ -22,7 +22,7 @@ Fullstack Next.js 14 application that lets users create boards, lists, and cards
 - **Tailwind CSS**
 - **Server Actions**
 - **Prisma**
-- **MySQL** (Railway recommended)
+- **MySQL** 
 - **shadcn/ui**
 - **Unsplash API**
 
@@ -32,7 +32,6 @@ Fullstack Next.js 14 application that lets users create boards, lists, and cards
 - Drag-and-drop reordering
 - Unsplash-powered cover images
 - Activity logs
-- Public workspace (no auth required)
 
 ## Prerequisites
 
@@ -131,11 +130,6 @@ npm start
 - **Prisma issues** – rerun `npx prisma generate`; reset with `npx prisma migrate reset` (clears data).
 - **Port already in use** – Next.js picks another port, or run `npm run dev -- -p 3001`.
 
-## Important Notes
-
-- Public access: everyone shares the same workspace.
-- No payment processing: Stripe removed.
-- Default org: boards belong to `default-org`.
 
 ## Need Help?
 
@@ -147,5 +141,4 @@ npm start
 - Kefah Abboud (301258693)
 - Ryan Massey (301107847)
 - Percy Osunde (301185959)
-- Saeed Herzi (301317522)
 - Jan Rafael Fontanilla (301380907)
