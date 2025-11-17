@@ -90,7 +90,7 @@ function Login() {
 
             <div className="text-center">
                 <p className="mb-0">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <Link href="/register" className="font-medium text-fg-brand hover:underline text-blue-500">
                         Sign up
                     </Link>

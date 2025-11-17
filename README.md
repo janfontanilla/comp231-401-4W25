@@ -2,46 +2,49 @@
 
 COMP231 Software Development Project 1 Group 4 Project
 
-## Project Structure
+Fullstack Next.js 14 application that lets users create boards, lists, and cards for project planning or quick note organization. Drag-and-drop interactions make reordering effortless. 
 
-- `/app` - Next.js 14 application (main application)
-- `/frontend` - Homepage and auth
-- `/prisma` - Database schema and migrations
-- `/components` - React components
-- `/actions` - Server actions for data mutations
-- `/lib` - Utility functions and configurations
+## Project Structure
 
 ## Description
 
 Fullstack NextJs 14 MyTracker app allowing users to create boards with lists and cards that can speed up process of developing software or just to create notes. This app allows users to organize lists and cards using the Drag n' Drop feature.
+- `/app` – Next.js 14 app directory and routes
+- `/frontend` – Marketing/homepage assets
+- `/prisma` – Prisma schema and migrations
+- `/components` – Reusable UI components
+- `/actions` – Server actions for CRUD operations
+- `/hooks` – Custom hooks
+- `/lib` – Utilities and configs
 
-## Tech stack
+## Tech Stack
 
-- **NextJs 14**
-- **React**
-- **Typescript**
-- **Tailwindcss**
+- **Next.js 14**
+- **React 18**
+- **TypeScript**
+- **Tailwind CSS**
 - **Server Actions**
 - **Prisma**
-- **MySQL** (hosted on Railway)
-- **Shadcn-ui**
+- **MySQL** 
+- **shadcn/ui**
 - **Unsplash API**
 
-## Key features
+## Key Features
 
-- Creating boards, lists and cards
-- Organizing lists and cards via Drag n' Drop
-- Unsplash API for random cover images
+- Create unlimited boards, lists, and cards
+- Drag-and-drop reordering
+- Unsplash-powered cover images
 - Activity logs
-- Boards, Lists and Cards actions
-- Unlimited boards (no limits)
-- Public access - no authentication required
 
-## Getting Started
+## Prerequisites
 
-See [SETUP.md](./SETUP.md) for detailed setup instructions.
+- **Node.js 18+** (includes npm)
+- **Railway account** (for hosted MySQL) or local MySQL
+- **Unsplash API access key** (optional but recommended)
 
-### Quick Start
+## Setup
+
+### 1. Install Dependencies
 
 1. Install dependencies:
 
@@ -50,14 +53,35 @@ npm install
 ```
 
 2. Set up environment variables (create `.env` file):
+`postinstall` automatically runs `prisma generate`.
+
+### 2. Configure Environment Variables
+
+Create `.env` with:
 
 ```env
-DATABASE_URL= Please message Jan Fontanilla on teams for the database url
+# Database
+DATABASE_URL="mysql://username:password@localhost:3306/database_name"
+
+# Unsplash (optional, improves cover selection)
 NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+
+# App URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-
 ```
+
+#### Helpful notes
+
+- **DATABASE_URL** can come from Railway (see below) or a local MySQL instance.
+- Without an Unsplash key, cover image selection falls back to defaults.
+
+### 3. Railway Database (Recommended)
+
+1. Sign up at [Railway](https://railway.app) and create a new project.
+2. Add a **MySQL** database.
+3. Copy the connection string from the **Connect** panel, e.g. `mysql://root:password@containers-us-west-54.railway.app:3306/railway`.
+4. Paste that string into `DATABASE_URL` in `.env`.
+5. Sync the schema:
 
 3. Run database migrations:
 
@@ -72,23 +96,41 @@ npx prisma db push
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+Visit `http://localhost:3000`.
+
+### 5. Production Build (Optional)
+
+```bash
+npm run build
+npm start
+```
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
+- `npm run dev` – Start the dev server
+- `npm run build` – Create production build
+- `npm start` – Run the production server
+- `npm run lint` – ESLint
+- `npm test` – Jest test suite
+- `npm run test:watch` – Jest watch mode
+
+## Troubleshooting
+
+- **Database fails to connect** – confirm `DATABASE_URL`, ensure Railway service (or local MySQL) is running.
+- **Prisma issues** – rerun `npx prisma generate`; reset with `npx prisma migrate reset` (clears data).
+- **Port already in use** – Next.js picks another port, or run `npm run dev -- -p 3001`.
+
+
+## Need Help?
+
+- [Next.js Docs](https://nextjs.org/docs)
+- [Prisma Docs](https://www.prisma.io/docs)
 
 ## Group Members
 
 - Kefah Abboud (301258693)
 - Ryan Massey (301107847)
 - Percy Osunde (301185959)
-- Saeed Herzi (301317522)
 - Jan Rafael Fontanilla (301380907)
 
 ## Running the Project Locally
