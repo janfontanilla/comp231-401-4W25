@@ -86,17 +86,7 @@ Prefer migrations?
 
 ```bash
 npx prisma migrate deploy
-```
 
-#### Local MySQL Alternative
-
-```env
-DATABASE_URL="mysql://root:password@localhost:3306/mytracker"
-```
-
-Then run:
-
-```bash
 npx prisma migrate dev
 ```
 
