@@ -88,7 +88,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```bash
 npx prisma generate
 npx prisma db push
-```
+
 
 4. Start development server:
 
