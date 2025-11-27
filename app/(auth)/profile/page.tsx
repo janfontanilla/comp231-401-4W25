@@ -1,8 +1,10 @@
 "use client"; // This directive marks the component as a Client Component
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 function Profile() {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
@@ -19,6 +21,13 @@ function Profile() {
             [e.target.name]: e.target.value,
         });
     };
+
+    const logout = async () => {
+        await fetch('/api/logout', {
+            method: 'POST',
+        });
+        router.push("/login");
+    }
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
@@ -52,10 +61,6 @@ function Profile() {
 
         const data = await response.json();
         setMessage(data.message);
-
-        if (response.ok) {
-            // router.push("/organization/default-org");
-        }
     };
 
     useEffect(() => {
@@ -127,8 +132,8 @@ function Profile() {
                         Reset Password
                     </button>
                 </div>
-
             </form>
+            <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4" onClick={logout}>Logout</button>
         </div>
     );
 }
