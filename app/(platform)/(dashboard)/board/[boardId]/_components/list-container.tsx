@@ -28,6 +28,8 @@ function reorder<T>(list: T[], startIndex: number, endIndex: number) {
 
 export const ListContainer = ({ data, boardId }: ListContainerProps) => {
   const [orderedData, setOrderedData] = useState(data);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
 
   const { execute: executeUpdateListOrder } = useAction(updateListOrder, {
     onSuccess: () => {
@@ -38,6 +40,21 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
     },
   });
 
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    await fetch('/api/comments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ comment, boardId }),
+    });
+
+    getComments();
+    setComment("");
+  };
+
   const { execute: executeUpdateCardOrder } = useAction(updateCardOrder, {
     onSuccess: () => {
       toast.success("Card reordered");
@@ -47,7 +64,17 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
     },
   });
 
+  const getComments = async () => {
+    const data = await fetch(`/api/comments?boardId=${boardId}`, {
+      method: 'GET',
+    });
+
+    const comments = await data.json();
+    setComments(comments);
+  }
+
   useEffect(() => {
+    getComments();
     setOrderedData(data);
   }, [data]);
 
@@ -168,6 +195,19 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
           </ol>
         )}
       </Droppable>
+      <ul className="bg-white mb-4 p-4 rounded shadow-md mt-4">
+        <li className="font-semibold mb-2 text-xl">Questions</li>
+        {comments.length === 0 ? <p>No questions yet.</p> :
+          (
+            comments.map((comment: any) => (
+              <li className="border m-1 p-2 rounded" key={comment.id}>{comment.text} - <i>{comment.name}</i></li>
+            ))
+          )}
+      </ul>
+      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow-md flex gap-2 w-1/2 flex justify-between">
+        <input placeholder="Enter your question" className="w-full border rounded p-2" type="text" name="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" type="submit">Submit</button>
+      </form>
     </DragDropContext>
   );
 };

@@ -65,6 +65,13 @@ model User {
   name      String
 }
 
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  name      String
+  boardId   String 
+}
+
 enum ACTION {
   CREATE
   UPDATE
