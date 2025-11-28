@@ -9,11 +9,20 @@ import { FormInput } from "@/components/form/form-input";
 import { updateBoard } from "@/actions/update-board";
 import { useAction } from "@/hooks/use-action";
 
+import Cookies from 'js-cookie';
+
 interface BoardTitleFormProps {
   data: Board;
 }
 
 export const BoardTitleForm = ({ data }: BoardTitleFormProps) => {
+  const userId = Cookies.get("userId") || "";
+  const [title, setTitle] = useState(data.title);
+
+  if (userId == "") {
+    return <div className="font-bold text-lg h-auto w-auto p-1 px-2">{title}</div>;
+  }
+
   const { execute } = useAction(updateBoard, {
     onSuccess: (data) => {
       toast.success(`Board "${data.title}" updated!`);
@@ -28,7 +37,7 @@ export const BoardTitleForm = ({ data }: BoardTitleFormProps) => {
   const formRef = useRef<ElementRef<"form">>(null);
   const inputRef = useRef<ElementRef<"input">>(null);
 
-  const [title, setTitle] = useState(data.title);
+
   const [isEditing, setIsEditing] = useState(false);
 
   const enableEditing = () => {
