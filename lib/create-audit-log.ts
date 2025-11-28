@@ -1,5 +1,7 @@
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
+import { cookies } from 'next/headers';
+
 import { db } from "@/lib/db";
 
 interface Props {
@@ -16,9 +18,15 @@ const DEFAULT_USER_NAME = "Guest User";
 const DEFAULT_USER_IMAGE = "";
 
 export const createAuditLog = async (props: Props) => {
-  const userId = DEFAULT_USER_ID; // Using default guest user ID
+  const userId = cookies().get("userId");
 
   try {
+    const user = await db.user.findUnique({
+      where: {
+        id: userId?.value,
+      },
+    });
+
     const { entityId, entityType, entityTitle, action } = props;
 
     await db.auditLog.create({
@@ -28,9 +36,9 @@ export const createAuditLog = async (props: Props) => {
         entityType,
         entityTitle,
         action,
-        userId: DEFAULT_USER_ID,
+        userId: user?.id || DEFAULT_USER_ID,
         userImage: DEFAULT_USER_IMAGE,
-        userName: DEFAULT_USER_NAME,
+        userName: user?.email || DEFAULT_USER_NAME,
       },
     });
   } catch (error) {

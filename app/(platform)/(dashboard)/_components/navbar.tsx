@@ -7,7 +7,11 @@ import Link from "next/link";
 import { MobileSidebar } from "./mobile-sidebar";
 import { FormPopover } from "@/components/form/form-popover";
 
+import { cookies } from "next/headers";
+
 export const Navbar = () => {
+  const userId = cookies().get("userId")?.value || "";
+
   return (
     <nav className="fixed z-50 top-0 px-4 w-full h-14 border-b shadow-sm bg-white flex justify-between items-center">
       <MobileSidebar />
@@ -35,9 +39,15 @@ export const Navbar = () => {
         </FormPopover>
       </div>
       <div>
-        <Link href="/profile" className="">
-          Profile
-        </Link>
+        {userId == "" ?
+          <Link href="/login" className="">
+            Login
+          </Link>
+          :
+          <Link href="/profile" className="">
+            Profile
+          </Link>
+        }
       </div>
     </nav>
   );
