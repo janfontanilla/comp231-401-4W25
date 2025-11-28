@@ -12,11 +12,15 @@ import { updateCard } from "@/actions/update-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormInput } from "@/components/form/form-input";
 
+import Cookies from 'js-cookie';
+
 interface HeaderProps {
   data: CardWithList;
 }
 
 export const Header = ({ data }: HeaderProps) => {
+  const userId = Cookies.get("userId") || "";
+
   const queryClient = useQueryClient();
   const params = useParams();
 
@@ -65,15 +69,20 @@ export const Header = ({ data }: HeaderProps) => {
     <div className="flex items-start gap-x-3 mb-6 w-full">
       <Layout className="h-5 w-5 mt-1 text-neutral-700" />
       <div className="w-full">
-        <form action={onSubmit}>
-          <FormInput
-            ref={inputRef}
-            onBlur={onBlur}
-            id="title"
-            defaultValue={title}
-            className="font-semibold text-xl px-1 text-neutral-700 bg-transparent border-transparent relative -left-1.5 w-[95%] focus-visible:bg-white focus-visible:border-input mb-0.5 truncate"
-          />
-        </form>
+        {userId != "" ?
+          <form action={onSubmit}>
+            <FormInput
+              ref={inputRef}
+              onBlur={onBlur}
+              id="title"
+              defaultValue={title}
+              className="font-semibold text-xl px-1 text-neutral-700 bg-transparent border-transparent relative -left-1.5 w-[95%] focus-visible:bg-white focus-visible:border-input mb-0.5 truncate"
+            />
+          </form>
+          : <div className="font-semibold text-xl px-1 text-neutral-700 bg-transparent border-transparent relative -left-1.5 w-[95%] focus-visible:bg-white focus-visible:border-input mb-0.5 truncate"
+          >
+            {title}
+          </div>}
         <p className="text-sm text-muted-foreground">
           in list <span className="underline">{data.list.title}</span>
         </p>

@@ -11,12 +11,16 @@ import { FormInput } from "@/components/form/form-input";
 
 import { ListOptions } from "./list-options";
 
+import Cookies from 'js-cookie';
+
 interface ListHeaderProps {
   data: List;
   onAddCard: () => void;
 }
 
 export const ListHeader = ({ data, onAddCard }: ListHeaderProps) => {
+  const userId = Cookies.get("userId") || "";
+
   const [title, setTitle] = useState(data.title);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -73,37 +77,45 @@ export const ListHeader = ({ data, onAddCard }: ListHeaderProps) => {
 
   useEventListener("keydown", onKeyDown);
 
-  return (
-    <div className="pt-2 px-2 text-sm font-semibold flex justify-between items-start- gap-x-2">
-      {isEditing ? (
-        <form ref={formRef} action={handleSubmit} className="flex-1 px-[2px]">
-          <input hidden id="id" name="id" value={data.id} readOnly />
-          <input
-            hidden
-            id="boardId"
-            name="boardId"
-            value={data.boardId}
-            readOnly
-          />
-          <FormInput
-            ref={inputRef}
-            onBlur={onBlur}
-            id="title"
-            placeholder="Enter list title.."
-            defaultValue={title}
-            className="text-sm px-[7px] py-1 h-7 font-medium border-transparent hover:border-input focus:border-input transition truncate bg-transparent focus:bg-white"
-          />
-          <button type="submit" hidden />
-        </form>
-      ) : (
-        <div
-          onClick={enableEditing}
-          className="w-full text-sm px-2.5 py-1 h-7 font-medium border-transparent"
-        >
-          {title}
-        </div>
-      )}
-      <ListOptions onAddCard={onAddCard} data={data} />
+  if (userId != "") {
+    return (
+      <div className="pt-2 px-2 text-sm font-semibold flex justify-between items-start- gap-x-2">
+        {isEditing ? (
+          <form ref={formRef} action={handleSubmit} className="flex-1 px-[2px]">
+            <input hidden id="id" name="id" value={data.id} readOnly />
+            <input
+              hidden
+              id="boardId"
+              name="boardId"
+              value={data.boardId}
+              readOnly
+            />
+            <FormInput
+              ref={inputRef}
+              onBlur={onBlur}
+              id="title"
+              placeholder="Enter list title.."
+              defaultValue={title}
+              className="text-sm px-[7px] py-1 h-7 font-medium border-transparent hover:border-input focus:border-input transition truncate bg-transparent focus:bg-white"
+            />
+            <button type="submit" hidden />
+          </form>
+        ) : (
+          <div
+            onClick={enableEditing}
+            className="w-full text-sm px-2.5 py-1 h-7 font-medium border-transparent"
+          >
+            {title}
+          </div>
+        )}
+        <ListOptions onAddCard={onAddCard} data={data} />
+      </div>
+    );
+  } else {
+    return <div
+      className=" pt-2 px-2 w-full text-sm px-2.5 py-1 h-7 font-medium border-transparent"
+    >
+      {title}
     </div>
-  );
+  }
 };

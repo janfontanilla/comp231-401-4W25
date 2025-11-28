@@ -16,6 +16,8 @@ const DEFAULT_USER_NAME = "Guest User";
 const DEFAULT_USER_IMAGE = "";
 
 export const createAuditLog = async (props: Props) => {
+  const userId = DEFAULT_USER_ID; // Using default guest user ID
+
   try {
     const { entityId, entityType, entityTitle, action } = props;
 

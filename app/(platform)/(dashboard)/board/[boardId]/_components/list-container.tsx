@@ -13,6 +13,10 @@ import { useAction } from "@/hooks/use-action";
 import { updateListOrder } from "@/actions/update-list-order";
 import { updateCardOrder } from "@/actions/update-card-order";
 
+import Link from "next/link";
+
+import Cookies from 'js-cookie';
+
 interface ListContainerProps {
   data: ListWithCards[];
   boardId: string;
@@ -30,6 +34,7 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
   const [orderedData, setOrderedData] = useState(data);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
+  const userId = Cookies.get("userId") || "";
 
   const { execute: executeUpdateListOrder } = useAction(updateListOrder, {
     onSuccess: () => {
@@ -79,100 +84,103 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
   }, [data]);
 
   const onDragEnd = (result: any) => {
-    const { destination, source, type } = result;
+    if (userId != "") {
 
-    if (!destination) {
-      return;
-    }
+      const { destination, source, type } = result;
 
-    // if dropped in the same position
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    // User moves a list
-    if (type === "list") {
-      const items = reorder(orderedData, source.index, destination.index).map(
-        (item, index) => ({ ...item, order: index })
-      );
-
-      setOrderedData(items);
-      executeUpdateListOrder({ items, boardId });
-    }
-
-    // User moves a card
-    if (type === "card") {
-      let newOrderedData = [...orderedData];
-
-      // Source and destination list
-      const sourceList = newOrderedData.find(
-        (list) => list.id === source.droppableId
-      );
-      const destList = newOrderedData.find(
-        (list) => list.id === destination.droppableId
-      );
-
-      if (!sourceList || !destList) {
+      if (!destination) {
         return;
       }
 
-      // Check if cards exists on the sourceList
-      if (!sourceList.cards) {
-        sourceList.cards = [];
+      // if dropped in the same position
+      if (
+        destination.droppableId === source.droppableId &&
+        destination.index === source.index
+      ) {
+        return;
       }
 
-      // Check if cards exists on the destList
-      if (!destList.cards) {
-        destList.cards = [];
-      }
-
-      // Moving the card in the same list
-      if (source.droppableId === destination.droppableId) {
-        const reorderedCards = reorder(
-          sourceList.cards,
-          source.index,
-          destination.index
+      // User moves a list
+      if (type === "list") {
+        const items = reorder(orderedData, source.index, destination.index).map(
+          (item, index) => ({ ...item, order: index })
         );
 
-        reorderedCards.forEach((card, idx) => {
-          card.order = idx;
-        });
+        setOrderedData(items);
+        executeUpdateListOrder({ items, boardId });
+      }
 
-        sourceList.cards = reorderedCards;
+      // User moves a card
+      if (type === "card") {
+        let newOrderedData = [...orderedData];
 
-        setOrderedData(newOrderedData);
-        executeUpdateCardOrder({
-          boardId: boardId,
-          items: reorderedCards,
-        });
-        // User moves the card to another list
-      } else {
-        // Remove card from the source list
-        const [movedCard] = sourceList.cards.splice(source.index, 1);
+        // Source and destination list
+        const sourceList = newOrderedData.find(
+          (list) => list.id === source.droppableId
+        );
+        const destList = newOrderedData.find(
+          (list) => list.id === destination.droppableId
+        );
 
-        // Assign the new listId to the moved card
-        movedCard.listId = destination.droppableId;
+        if (!sourceList || !destList) {
+          return;
+        }
 
-        // Add card to the destination list
-        destList.cards.splice(destination.index, 0, movedCard);
+        // Check if cards exists on the sourceList
+        if (!sourceList.cards) {
+          sourceList.cards = [];
+        }
 
-        sourceList.cards.forEach((card, idx) => {
-          card.order = idx;
-        });
+        // Check if cards exists on the destList
+        if (!destList.cards) {
+          destList.cards = [];
+        }
 
-        // Update the order for each card in the destination list
-        destList.cards.forEach((card, idx) => {
-          card.order = idx;
-        });
+        // Moving the card in the same list
+        if (source.droppableId === destination.droppableId) {
+          const reorderedCards = reorder(
+            sourceList.cards,
+            source.index,
+            destination.index
+          );
 
-        setOrderedData(newOrderedData);
-        executeUpdateCardOrder({
-          boardId: boardId,
-          items: destList.cards,
-        });
+          reorderedCards.forEach((card, idx) => {
+            card.order = idx;
+          });
+
+          sourceList.cards = reorderedCards;
+
+          setOrderedData(newOrderedData);
+          executeUpdateCardOrder({
+            boardId: boardId,
+            items: reorderedCards,
+          });
+          // User moves the card to another list
+        } else {
+          // Remove card from the source list
+          const [movedCard] = sourceList.cards.splice(source.index, 1);
+
+          // Assign the new listId to the moved card
+          movedCard.listId = destination.droppableId;
+
+          // Add card to the destination list
+          destList.cards.splice(destination.index, 0, movedCard);
+
+          sourceList.cards.forEach((card, idx) => {
+            card.order = idx;
+          });
+
+          // Update the order for each card in the destination list
+          destList.cards.forEach((card, idx) => {
+            card.order = idx;
+          });
+
+          setOrderedData(newOrderedData);
+          executeUpdateCardOrder({
+            boardId: boardId,
+            items: destList.cards,
+          });
+        }
       }
     }
   };
@@ -190,11 +198,14 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
               return <ListItem key={list.id} index={index} data={list} />;
             })}
             {provided.placeholder}
-            <ListForm />
+            {userId != "" &&
+              <ListForm />
+            }
             <div className="flex-shrink-0 w-1" />
           </ol>
         )}
       </Droppable>
+
       <ul className="bg-white mb-4 p-4 rounded shadow-md mt-4">
         <li className="font-semibold mb-2 text-xl">Questions</li>
         {comments.length === 0 ? <p>No questions yet.</p> :
@@ -204,10 +215,16 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
             ))
           )}
       </ul>
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow-md flex gap-2 w-1/2 flex justify-between">
-        <input placeholder="Enter your question" className="w-full border rounded p-2" type="text" name="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" type="submit">Submit</button>
-      </form>
+      {userId != "" ?
+        <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow-md flex gap-2 w-1/2 flex justify-between">
+          <input placeholder="Enter your question" className="w-full border rounded p-2" type="text" name="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" type="submit">Submit</button>
+        </form>
+        : <div>
+          <p className="bg-white p-4 rounded shadow-md text-gray-600 italic">Please log in to submit questions. <Link href="/login" className="text-blue-500 not-italic font-medium text-fg-brand hover:underline">
+            Login
+          </Link></p>
+        </div>}
     </DragDropContext>
   );
 };

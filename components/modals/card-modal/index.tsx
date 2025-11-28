@@ -14,7 +14,11 @@ import { Actions } from "./actions";
 import { AuditLog } from "@prisma/client";
 import { Activity } from "./activity";
 
+import Cookies from 'js-cookie';
+
 export const CardModal = () => {
+  const userId = Cookies.get("userId") || "";
+
   const id = useCardModal((state) => state.id);
   const isOpen = useCardModal((state) => state.isOpen);
   const onClose = useCardModal((state) => state.onClose);
