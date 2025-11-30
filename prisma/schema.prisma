@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider     = "mysql"
@@ -7,69 +8,88 @@ datasource db {
   relationMode = "prisma"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Board {
-  id                  String @id @default(uuid())
-  orgId               String
-  title               String
-  imageId             String
-  imageThumbUrl       String @db.Text
-  imageFullUrl        String @db.Text
-  imageUserName       String @db.Text
-  imageLinkHTML       String @db.Text
-
-  lists               List[]
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id            String   @id @default(uuid())
+  orgId         String
+  title         String
+  imageId       String
+  imageThumbUrl String   @db.Text
+  imageFullUrl  String   @db.Text
+  imageUserName String   @db.Text
+  imageLinkHTML String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lists         List[]
 }
 
 model List {
-  id                  String @id @default(uuid())
-  title               String
-  order               Int
-
-  boardId             String
-  board               Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
-
-  cards               Card[]
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  boardId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
 
   @@index([boardId])
 }
 
 model Card {
-  id                  String @id @default(uuid())
-  title               String
-  description         String? @db.Text
-  order               Int
-
-  listId              String
-  list                List   @relation(fields: [listId], references: [id], onDelete: Cascade)
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  order       Int
+  listId      String
+  assignedToId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignedTo  User?    @relation("AssignedCards", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([listId])
+  @@index([assignedToId])
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          String   @default("user")
+  createdAt     DateTime @default(now())
+  assignedCards Card[]   @relation("AssignedCards")
 }
 
-model Comment {
+model AuditLog {
+  id          String      @id @default(uuid())
+  orgId       String
+  action      ACTION
+  entityId    String
+  entityType  ENTITY_TYPE
+  entityTitle String
+  userId      String
+  userImage   String      @db.Text
+  userName    String      @db.Text
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrgLimit {
   id        String   @id @default(uuid())
-  text      String
-  name      String
-  boardId   String 
+  orgId     String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrgSubscription {
+  id                     String    @id @default(uuid())
+  orgId                  String    @unique
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
+  stripePriceId          String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
 }
 
 enum ACTION {
@@ -82,38 +102,4 @@ enum ENTITY_TYPE {
   BOARD
   LIST
   CARD
-}
-
-model AuditLog {
-  id                  String  @id @default(uuid())
-  orgId               String
-  action              ACTION
-  entityId            String
-  entityType          ENTITY_TYPE
-  entityTitle         String
-  userId              String
-  userImage           String @db.Text
-  userName            String @db.Text
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime  @updatedAt
-}
-
-model OrgLimit {
-  id                  String @id @default(uuid())
-  orgId               String @unique
-  count               Int @default(0)
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime  @updatedAt
-}
-
-model OrgSubscription {
-  id                  String @id @default(uuid())
-  orgId               String @unique
-
-  stripeCustomerId            String? @unique @map(name: "stripe_customer_id")
-  stripeSubscriptionId        String? @unique @map(name: "stripe_subscription_id")
-  stripePriceId               String? @map(name: "stripe_price_id")
-  stripeCurrentPeriodEnd      DateTime? @map(name: "stripe_current_period_end")
 }

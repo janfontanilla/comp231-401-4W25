@@ -11,8 +11,10 @@ import { createCard } from "@/actions/create-card";
 import { Button } from "@/components/ui/button";
 import { FormSubmit } from "@/components/form/form-submit";
 import { FormTextarea } from "@/components/form/form-textarea";
+import { UserSelector } from "@/components/form/user-selector";
 
 import Cookies from 'js-cookie';
+import { useState } from "react";
 
 interface CardFormProps {
   listId: string;
@@ -29,11 +31,13 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
 
       const params = useParams();
       const formRef = useRef<ElementRef<"form">>(null);
+      const [assignedToId, setAssignedToId] = useState<string | null>(null);
 
       const { execute, fieldErrors } = useAction(createCard, {
         onSuccess: (data) => {
           toast.success(`Card "${data.title}" created`);
           formRef.current?.reset();
+          setAssignedToId(null);
         },
         onError: (error) => {
           toast.error(error);
@@ -63,7 +67,7 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
         const listId = formData.get("listId") as string;
         const boardId = params.boardId as string;
 
-        execute({ title, listId, boardId });
+        execute({ title, listId, boardId, assignedToId: assignedToId || undefined });
       };
 
       if (isEditing) {
@@ -79,6 +83,10 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
               ref={ref}
               placeholder="Enter a title for this card..."
               errors={fieldErrors}
+            />
+            <UserSelector
+              value={assignedToId || undefined}
+              onChange={setAssignedToId}
             />
             <input hidden id="listId" name="listId" value={listId} readOnly />
             <div className="flex items-center gap-x-1">

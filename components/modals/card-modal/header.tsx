@@ -9,8 +9,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CardWithList } from "@/types";
 import { useAction } from "@/hooks/use-action";
 import { updateCard } from "@/actions/update-card";
+import { assignTask } from "@/actions/assign-task";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormInput } from "@/components/form/form-input";
+import { UserSelector } from "@/components/form/user-selector";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { User as UserIcon } from "lucide-react";
 
 import Cookies from 'js-cookie';
 
@@ -36,6 +40,18 @@ export const Header = ({ data }: HeaderProps) => {
 
       toast.success(`Renamed to "${data.title}"`);
       setTitle(data.title);
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
+
+  const { execute: executeAssign } = useAction(assignTask, {
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["card", data.id],
+      });
+      toast.success("Task assignment updated");
     },
     onError: (error) => {
       toast.error(error);
@@ -86,6 +102,18 @@ export const Header = ({ data }: HeaderProps) => {
         <p className="text-sm text-muted-foreground">
           in list <span className="underline">{data.list.title}</span>
         </p>
+        <div className="mt-4">
+          <UserSelector
+            value={(data as any).assignedTo?.id || undefined}
+            onChange={(userId) => {
+              executeAssign({
+                cardId: data.id,
+                assignedToId: userId || undefined,
+                boardId: params.boardId as string,
+              });
+            }}
+          />
+        </div>
       </div>
     </div>
   );

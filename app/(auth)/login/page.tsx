@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "./_components/Login.css";
 
-import Cookies from "js-cookie";
-
 function Login() {
     const router = useRouter();
     const [email, setEmail] = useState("");
@@ -41,7 +39,7 @@ function Login() {
             setError(data.message || "Login failed");
             return;
         } else {
-            Cookies.set("userId", data.user.id);
+            // Cookie is now set server-side in /api/login for security (httpOnly)
             router.push("/organization/default-org");
         }
     };

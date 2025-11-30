@@ -8,26 +8,34 @@ import { createAuditLog } from "@/lib/create-audit-log";
 import { createSafeAction } from "@/lib/create-safe-action";
 import { DEFAULT_ORG_ID } from "@/lib/constants";
 
-import { CreateCard } from "./schema";
+import { AssignTask } from "./schema";
 import { InputType, ReturnType } from "./types";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
-  const { title, boardId, listId, assignedToId } = data;
-  let card;
+  const { cardId, assignedToId, boardId } = data;
 
   try {
-    const list = await db.list.findUnique({
-      where: {
-        id: listId,
-        board: {
-          orgId: DEFAULT_ORG_ID,
+    // Verify card exists and belongs to the organization
+    const card = await db.card.findUnique({
+      where: { id: cardId },
+      include: {
+        list: {
+          include: {
+            board: true,
+          },
         },
       },
     });
 
-    if (!list) {
+    if (!card) {
       return {
-        error: "List not found",
+        error: "Card not found",
+      };
+    }
+
+    if (card.list.board.orgId !== DEFAULT_ORG_ID) {
+      return {
+        error: "Unauthorized",
       };
     }
 
@@ -43,20 +51,14 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       }
     }
 
-    const lastCard = await db.card.findFirst({
-      where: { listId },
-      orderBy: { order: "desc" },
-      select: { order: true },
-    });
-
-    const newOrder = lastCard ? lastCard.order + 1 : 1;
-
-    card = await db.card.create({
+    // Update card assignment
+    const updatedCard = await db.card.update({
+      where: { id: cardId },
       data: {
-        title,
-        listId,
-        order: newOrder,
         assignedToId: assignedToId || null,
+      },
+      include: {
+        assignedTo: true,
       },
     });
 
@@ -64,16 +66,17 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       entityId: card.id,
       entityTitle: card.title,
       entityType: ENTITY_TYPE.CARD,
-      action: ACTION.CREATE,
+      action: ACTION.UPDATE,
     });
+
+    revalidatePath(`/board/${boardId}`);
+    return { data: updatedCard };
   } catch (error) {
     return {
-      error: "Failed to create.",
+      error: "Failed to assign task.",
     };
   }
-
-  revalidatePath(`/board/${boardId}`);
-  return { data: card };
 };
 
-export const createCard = createSafeAction(CreateCard, handler);
+export const assignTask = createSafeAction(AssignTask, handler);
+

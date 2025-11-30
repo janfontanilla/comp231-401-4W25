@@ -19,6 +19,15 @@ const BoardIdPage = async ({ params }: BoardIdPageProps) => {
     },
     include: {
       cards: {
+        include: {
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
         orderBy: {
           order: "asc",
         },

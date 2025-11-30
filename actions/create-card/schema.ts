@@ -11,4 +11,5 @@ export const CreateCard = z.object({
     }),
   boardId: z.string(),
   listId: z.string(),
+  assignedToId: z.string().optional().nullable(),
 });
