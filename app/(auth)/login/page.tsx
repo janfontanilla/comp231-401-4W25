@@ -80,6 +80,12 @@ function Login() {
                     </div>
                 )}
 
+                <div className="text-right mt-2">
+                    <Link href="/forgot-password" className="text-sm text-blue-500 hover:underline">
+                        Forgot Password?
+                    </Link>
+                </div>
+
                 <div className="text-center mt-5 mb-4">
                     <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Sign In
