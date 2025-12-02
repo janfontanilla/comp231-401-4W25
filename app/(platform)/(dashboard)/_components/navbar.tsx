@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { MobileSidebar } from "./mobile-sidebar";
 import { FormPopover } from "@/components/form/form-popover";
+import { NotificationBell } from "@/components/notification-bell";
+import { GuestFeedbackForm } from "@/components/guest-feedback-form";
 
 import { cookies } from "next/headers";
 
@@ -38,16 +40,23 @@ export const Navbar = () => {
           </Button>
         </FormPopover>
       </div>
-      <div>
-        {userId == "" ?
-          <Link href="/login" className="">
+      <div className="flex items-center gap-x-2">
+        {/* Guest feedback button - available to everyone */}
+        <GuestFeedbackForm />
+        
+        {userId == "" ? (
+          <Link href="/login" className="text-sm font-medium hover:underline">
             Login
           </Link>
-          :
-          <Link href="/profile" className="">
-            Profile
-          </Link>
-        }
+        ) : (
+          <>
+            {/* Notification bell - only for logged in users */}
+            <NotificationBell />
+            <Link href="/profile" className="text-sm font-medium hover:underline">
+              Profile
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
