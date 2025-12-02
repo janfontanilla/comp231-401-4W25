@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE_MAX_AGE } from '@/lib/constants';
+import { logLogin, logLoginFailed } from '@/lib/access-log';
 
 export async function POST(request: Request) {
     const { email, password } = await request.json();
@@ -14,12 +15,14 @@ export async function POST(request: Request) {
     try {
         const user = await db.user.findUnique({ where: { email } });
         if (!user) {
+            await logLoginFailed(email, 'User not found');
             return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
+            await logLoginFailed(email, 'Invalid password');
             return NextResponse.json({ message: 'Invalid email or password' }, { status: 401 });
         }
 
@@ -31,6 +34,9 @@ export async function POST(request: Request) {
             maxAge: SESSION_COOKIE_MAX_AGE,
             path: '/',
         });
+
+        // Log successful login
+        await logLogin(user.id, user.email);
 
         return NextResponse.json({ 
             message: 'Login successful', 

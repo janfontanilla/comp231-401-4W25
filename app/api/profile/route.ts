@@ -8,15 +8,34 @@ export async function GET() {
     try {
         const userId = cookies().get("userId");
 
+        if (!userId?.value) {
+            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        }
+
         const user = await db.user.findUnique({
             where: {
-                id: userId?.value,
+                id: userId.value,
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true,
             },
         });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        // Log for debugging
+        console.log('[PROFILE_GET] User:', user.email, 'Role:', user.role);
 
         return NextResponse.json(user);
 
     } catch (error) {
+        console.error('[PROFILE_ERROR]', error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
