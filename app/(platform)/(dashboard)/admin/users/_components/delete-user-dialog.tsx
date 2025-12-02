@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ export const DeleteUserDialog = ({
         throw new Error(data.error || "Failed to delete user");
       }
 
+      toast.success(`User "${userName}" deleted successfully`);
       onOpenChange(false);
       onSuccess();
     } catch (err) {

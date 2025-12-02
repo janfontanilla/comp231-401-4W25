@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -53,7 +54,8 @@ export const AddUserForm = ({
         throw new Error(data.error || "Failed to create user");
       }
 
-      // Reset form
+      // Reset form and show success message
+      toast.success(`User "${formData.name}" created successfully`);
       setFormData({
         name: "",
         email: "",
