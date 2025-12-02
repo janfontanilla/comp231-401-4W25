@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { ElementRef, useRef, useState } from "react";
+import { ElementRef, useRef, useState, useEffect } from "react";
 import { Board } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
@@ -9,19 +9,29 @@ import { FormInput } from "@/components/form/form-input";
 import { updateBoard } from "@/actions/update-board";
 import { useAction } from "@/hooks/use-action";
 
-import Cookies from 'js-cookie';
-
 interface BoardTitleFormProps {
   data: Board;
 }
 
 export const BoardTitleForm = ({ data }: BoardTitleFormProps) => {
-  const userId = Cookies.get("userId") || "";
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState(data.title);
 
-  if (userId == "") {
-    return <div className="font-bold text-lg h-auto w-auto p-1 px-2">{title}</div>;
-  }
+  // Check authentication via API since cookie is httpOnly
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        setIsAuthenticated(response.ok);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const { execute } = useAction(updateBoard, {
     onSuccess: (data) => {
@@ -64,6 +74,11 @@ export const BoardTitleForm = ({ data }: BoardTitleFormProps) => {
   const onBlur = () => {
     formRef.current?.requestSubmit();
   };
+
+  // Show read-only title while loading or if not authenticated
+  if (isLoading || !isAuthenticated) {
+    return <div className="font-bold text-lg h-auto w-auto p-1 px-2">{title}</div>;
+  }
 
   if (isEditing) {
     return (

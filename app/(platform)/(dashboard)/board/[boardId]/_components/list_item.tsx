@@ -10,15 +10,12 @@ import { ListHeader } from "./list-header";
 import { CardForm } from "./card-form";
 import { CardItem } from "./card-item";
 
-import Cookies from 'js-cookie';
-
 interface ListItemProps {
   data: ListWithCards;
   index: number;
 }
 
 export const ListItem = ({ data, index }: ListItemProps) => {
-  const userId = Cookies.get("userId") || "";
 
   const textareaRef = useRef<ElementRef<"textarea">>(null);
 

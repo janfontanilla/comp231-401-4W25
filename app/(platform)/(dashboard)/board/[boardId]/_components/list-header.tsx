@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { List } from "@prisma/client";
 import { useEventListener } from "usehooks-ts";
-import { useState, useRef, ElementRef } from "react";
+import { useState, useRef, ElementRef, useEffect } from "react";
 
 import { useAction } from "@/hooks/use-action";
 import { updateList } from "@/actions/update-list";
@@ -11,18 +11,28 @@ import { FormInput } from "@/components/form/form-input";
 
 import { ListOptions } from "./list-options";
 
-import Cookies from 'js-cookie';
-
 interface ListHeaderProps {
   data: List;
   onAddCard: () => void;
 }
 
 export const ListHeader = ({ data, onAddCard }: ListHeaderProps) => {
-  const userId = Cookies.get("userId") || "";
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [title, setTitle] = useState(data.title);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Check authentication via API since cookie is httpOnly
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        setIsAuthenticated(response.ok);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const formRef = useRef<ElementRef<"form">>(null);
   const inputRef = useRef<ElementRef<"input">>(null);
@@ -77,7 +87,7 @@ export const ListHeader = ({ data, onAddCard }: ListHeaderProps) => {
 
   useEventListener("keydown", onKeyDown);
 
-  if (userId != "") {
+  if (isAuthenticated) {
     return (
       <div className="pt-2 px-2 text-sm font-semibold flex justify-between items-start- gap-x-2">
         {isEditing ? (

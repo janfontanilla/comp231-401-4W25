@@ -15,8 +15,6 @@ import { updateCardOrder } from "@/actions/update-card-order";
 
 import Link from "next/link";
 
-import Cookies from 'js-cookie';
-
 interface ListContainerProps {
   data: ListWithCards[];
   boardId: string;
@@ -34,7 +32,7 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
   const [orderedData, setOrderedData] = useState(data);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
-  const userId = Cookies.get("userId") || "";
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const { execute: executeUpdateListOrder } = useAction(updateListOrder, {
     onSuccess: () => {
@@ -47,17 +45,31 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
+    if (!comment.trim()) {
+      toast.error("Please enter a question");
+      return;
+    }
 
-    await fetch('/api/comments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ comment, boardId }),
-    });
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment, boardId }),
+      });
 
-    getComments();
-    setComment("");
+      if (response.ok) {
+        toast.success("Question submitted successfully");
+        getComments();
+        setComment("");
+      } else {
+        toast.error("Failed to submit question");
+      }
+    } catch (error) {
+      toast.error("Failed to submit question");
+    }
   };
 
   const { execute: executeUpdateCardOrder } = useAction(updateCardOrder, {
@@ -81,10 +93,21 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
   useEffect(() => {
     getComments();
     setOrderedData(data);
+    
+    // Check authentication via API since cookie is httpOnly
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        setIsAuthenticated(response.ok);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
   }, [data]);
 
   const onDragEnd = (result: any) => {
-    if (userId != "") {
+    if (isAuthenticated) {
 
       const { destination, source, type } = result;
 
@@ -198,7 +221,7 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
               return <ListItem key={list.id} index={index} data={list} />;
             })}
             {provided.placeholder}
-            {userId != "" &&
+            {isAuthenticated &&
               <ListForm />
             }
             <div className="flex-shrink-0 w-1" />
@@ -206,25 +229,63 @@ export const ListContainer = ({ data, boardId }: ListContainerProps) => {
         )}
       </Droppable>
 
-      <ul className="bg-white mb-4 p-4 rounded shadow-md mt-4">
-        <li className="font-semibold mb-2 text-xl">Questions</li>
-        {comments.length === 0 ? <p>No questions yet.</p> :
-          (
-            comments.map((comment: any) => (
-              <li className="border m-1 p-2 rounded" key={comment.id}>{comment.text} - <i>{comment.name}</i></li>
-            ))
-          )}
-      </ul>
-      {userId != "" ?
-        <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow-md flex gap-2 w-1/2 flex justify-between">
-          <input placeholder="Enter your question" className="w-full border rounded p-2" type="text" name="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" type="submit">Submit</button>
+      {/* Questions Section */}
+      <div className="bg-white mb-4 p-4 rounded-lg shadow-md mt-4 max-w-2xl">
+        <h3 className="font-semibold mb-3 text-xl flex items-center gap-2">
+          <span>💬</span> Questions & Discussion
+        </h3>
+        {comments.length === 0 ? (
+          <p className="text-gray-500 text-sm py-4 text-center">No questions yet. Be the first to ask!</p>
+        ) : (
+          <ul className="space-y-3 max-h-64 overflow-y-auto">
+            {comments.map((comment: any) => (
+              <li className="border border-gray-200 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition" key={comment.id}>
+                <p className="text-gray-800">{comment.text}</p>
+                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                  <span className="font-medium">— {comment.name}</span>
+                  {comment.createdAt && (
+                    <span>{new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      
+      {/* Question Form */}
+      {isAuthenticated ? (
+        <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow-md flex flex-col sm:flex-row gap-2 w-full max-w-2xl">
+          <input 
+            placeholder="Ask a question about this board..." 
+            className="flex-1 border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+            type="text" 
+            name="comment" 
+            value={comment} 
+            onChange={(e) => setComment(e.target.value)} 
+          />
+          <button 
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors whitespace-nowrap" 
+            type="submit"
+          >
+            Submit Question
+          </button>
         </form>
-        : <div>
-          <p className="bg-white p-4 rounded shadow-md text-gray-600 italic">Please log in to submit questions. <Link href="/login" className="text-blue-500 not-italic font-medium text-fg-brand hover:underline">
-            Login
-          </Link></p>
-        </div>}
+      ) : (
+        <div className="max-w-2xl">
+          <p className="bg-white p-4 rounded-lg shadow-md text-gray-600 italic">
+            Please log in to submit questions.{" "}
+            <Link href="/login" className="text-blue-500 not-italic font-medium hover:underline">
+              Login
+            </Link>
+          </p>
+        </div>
+      )}
     </DragDropContext>
   );
 };
