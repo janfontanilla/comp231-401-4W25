@@ -36,29 +36,36 @@ model List {
 }
 
 model Card {
-  id          String   @id @default(uuid())
-  title       String
-  description String?  @db.Text
-  order       Int
-  listId      String
+  id           String    @id @default(uuid())
+  title        String
+  description  String?   @db.Text
+  order        Int
+  listId       String
   assignedToId String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
-  assignedTo  User?    @relation("AssignedCards", fields: [assignedToId], references: [id], onDelete: SetNull)
+  dueDate      DateTime? // Deadline for notifications
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  list         List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignedTo   User?     @relation("AssignedCards", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([listId])
   @@index([assignedToId])
+  @@index([dueDate])
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  name          String
-  role          String   @default("user")
-  createdAt     DateTime @default(now())
-  assignedCards Card[]   @relation("AssignedCards")
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  name                  String
+  role                  String   @default("user")
+  notifyEmail           Boolean  @default(true)  // Email notifications
+  notifyInApp           Boolean  @default(true)  // In-app notifications
+  notifyDeadlines       Boolean  @default(true)  // Deadline reminders
+  notifyAssignments     Boolean  @default(true)  // Assignment notifications
+  createdAt             DateTime @default(now())
+  assignedCards         Card[]   @relation("AssignedCards")
+  notifications         Notification[]
 }
 
 model AuditLog {
@@ -102,4 +109,94 @@ enum ENTITY_TYPE {
   BOARD
   LIST
   CARD
+}
+
+// Comments/Questions on boards
+model Comment {
+  id        String   @id @default(uuid())
+  text      String   @db.Text
+  name      String
+  boardId   String
+  createdAt DateTime @default(now())
+  
+  @@index([boardId])
+}
+
+// Password reset tokens for SE5
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([token])
+}
+
+// Guest invite links (GR1-GR3)
+model GuestInvite {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  email       String?  // Optional email to restrict invite
+  boardId     String?  // Optional: restrict to specific board
+  createdBy   String   // Admin who created the invite
+  expiresAt   DateTime
+  maxUses     Int      @default(1)
+  usedCount   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  @@index([token])
+  @@index([createdBy])
+}
+
+// Guest feedback submissions (GR1-GR3)
+model GuestFeedback {
+  id          String   @id @default(uuid())
+  guestName   String
+  guestEmail  String?
+  boardId     String?
+  feedback    String   @db.Text
+  rating      Int?     // Optional 1-5 rating
+  status      String   @default("pending") // pending, reviewed, resolved
+  createdAt   DateTime @default(now())
+  
+  @@index([boardId])
+  @@index([status])
+}
+
+// System notifications (SR3)
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // deadline, assignment, system, question
+  title       String
+  message     String   @db.Text
+  link        String?  // Optional link to related item
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+}
+
+// Access logging for security
+model AccessLog {
+  id          String   @id @default(uuid())
+  userId      String?  // Null if not authenticated
+  userEmail   String?
+  action      String   // login, logout, access_denied, admin_access, etc.
+  resource    String   // The resource being accessed
+  ipAddress   String?
+  userAgent   String?  @db.Text
+  success     Boolean
+  message     String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
