@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { ElementRef, useRef, useState } from "react";
+import { ElementRef, useRef, useState, useEffect } from "react";
 import { Layout } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,14 +16,25 @@ import { UserSelector } from "@/components/form/user-selector";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon } from "lucide-react";
 
-import Cookies from 'js-cookie';
-
 interface HeaderProps {
   data: CardWithList;
 }
 
 export const Header = ({ data }: HeaderProps) => {
-  const userId = Cookies.get("userId") || "";
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication via API since cookie is httpOnly
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        setIsAuthenticated(response.ok);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const queryClient = useQueryClient();
   const params = useParams();
@@ -85,7 +96,7 @@ export const Header = ({ data }: HeaderProps) => {
     <div className="flex items-start gap-x-3 mb-6 w-full">
       <Layout className="h-5 w-5 mt-1 text-neutral-700" />
       <div className="w-full">
-        {userId != "" ?
+        {isAuthenticated ?
           <form action={onSubmit}>
             <FormInput
               ref={inputRef}
@@ -102,18 +113,20 @@ export const Header = ({ data }: HeaderProps) => {
         <p className="text-sm text-muted-foreground">
           in list <span className="underline">{data.list.title}</span>
         </p>
-        <div className="mt-4">
-          <UserSelector
-            value={(data as any).assignedTo?.id || undefined}
-            onChange={(userId) => {
-              executeAssign({
-                cardId: data.id,
-                assignedToId: userId || undefined,
-                boardId: params.boardId as string,
-              });
-            }}
-          />
-        </div>
+        {isAuthenticated && (
+          <div className="mt-4">
+            <UserSelector
+              value={(data as any).assignedTo?.id || undefined}
+              onChange={(userId) => {
+                executeAssign({
+                  cardId: data.id,
+                  assignedToId: userId || undefined,
+                  boardId: params.boardId as string,
+                });
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
