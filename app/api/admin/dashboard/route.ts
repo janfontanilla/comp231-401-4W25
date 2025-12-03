@@ -1,8 +1,42 @@
+/**
+ * @fileoverview Admin Dashboard API Route
+ * @description Provides aggregated statistics and metrics for admin users
+ * @author Jan Rafael
+ */
+
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 import { DEFAULT_ORG_ID, RECENT_ACTIVITY_LIMIT, ACTIVE_USER_THRESHOLD_DAYS } from '@/lib/constants';
 
+/**
+ * GET /api/admin/dashboard - Retrieve admin dashboard statistics
+ * 
+ * @description Fetches aggregated metrics for the admin dashboard including:
+ * - Total boards, cards, users, and lists counts
+ * - Completion rate (cards in Done/Complete/Finished lists)
+ * - Boards created this month
+ * - Active users (users with recent audit log activity)
+ * - Recent activity log entries
+ * 
+ * @algorithm Completion Rate Calculation:
+ * completionRate = (completedCards / totalCards) * 100
+ * where completedCards = cards in lists containing "Done", "Complete", or "Finished"
+ * 
+ * @requires Admin authentication (role = 'admin')
+ * 
+ * @returns {Promise<NextResponse>} JSON response with dashboard data
+ * @returns {200} Success - Returns stats object and recentActivity array
+ * @returns {403} Forbidden - User is not admin
+ * @returns {500} Server Error - Database error
+ * 
+ * @example
+ * // Response (200)
+ * {
+ *   "stats": { "totalBoards": 5, "totalCards": 25, "totalUsers": 10, "completionRate": 40, ... },
+ *   "recentActivity": [...]
+ * }
+ */
 export async function GET() {
   try {
     // Check if user is admin

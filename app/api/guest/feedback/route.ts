@@ -1,8 +1,26 @@
+/**
+ * @fileoverview Guest Feedback API Route
+ * @description Handles guest feedback submission and retrieval
+ * @author Saeed Herzi
+ */
+
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 
-// GET - List all feedback (admin only)
+/**
+ * GET /api/guest/feedback - Retrieve all feedback entries (Admin only)
+ * 
+ * @description Fetches all guest feedback submissions, ordered by most recent.
+ * Only accessible by admin users.
+ * 
+ * @requires Admin authentication
+ * 
+ * @returns {Promise<NextResponse>} JSON array of feedback entries
+ * @returns {200} Success - Array of feedback objects
+ * @returns {403} Forbidden - Non-admin access attempt
+ * @returns {500} Server Error - Database error
+ */
 export async function GET() {
   try {
     await requireAdmin();
@@ -20,7 +38,30 @@ export async function GET() {
   }
 }
 
-// POST - Submit feedback (anyone can submit)
+/**
+ * POST /api/guest/feedback - Submit guest feedback
+ * 
+ * @description Allows guests to submit feedback about projects. No authentication required.
+ * Validates that name and feedback text are provided, and rating is 1-5 if included.
+ * 
+ * @param {Request} request - The incoming HTTP request
+ * @param {Object} request.body - JSON body
+ * @param {string} request.body.guestName - Name of the guest (required)
+ * @param {string} [request.body.guestEmail] - Optional email address
+ * @param {string} [request.body.boardId] - Optional board ID
+ * @param {string} request.body.feedback - Feedback text (required)
+ * @param {number} [request.body.rating] - Optional rating 1-5
+ * 
+ * @returns {Promise<NextResponse>} JSON response
+ * @returns {201} Success - Feedback saved
+ * @returns {400} Bad Request - Missing required fields or invalid rating
+ * @returns {500} Server Error - Database error
+ * 
+ * @example
+ * // Request
+ * POST /api/guest/feedback
+ * { "guestName": "John", "feedback": "Great project!", "rating": 5 }
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -61,7 +102,25 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH - Update feedback status (admin only)
+/**
+ * PATCH /api/guest/feedback - Update feedback status (Admin only)
+ * 
+ * @description Updates the status of a feedback entry. Status can be:
+ * 'pending', 'reviewed', or 'resolved'. Only accessible by admin users.
+ * 
+ * @requires Admin authentication
+ * 
+ * @param {Request} request - The incoming HTTP request
+ * @param {Object} request.body - JSON body
+ * @param {string} request.body.id - Feedback entry ID
+ * @param {string} request.body.status - New status ('pending'|'reviewed'|'resolved')
+ * 
+ * @returns {Promise<NextResponse>} JSON response
+ * @returns {200} Success - Updated feedback object
+ * @returns {400} Bad Request - Missing ID/status or invalid status
+ * @returns {403} Forbidden - Non-admin access attempt
+ * @returns {500} Server Error - Database error
+ */
 export async function PATCH(request: Request) {
   try {
     await requireAdmin();
