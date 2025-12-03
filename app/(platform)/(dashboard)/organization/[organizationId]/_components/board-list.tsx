@@ -1,20 +1,41 @@
 import Link from "next/link";
 import { User2 } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { db } from "@/lib/db";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormPopover } from "@/components/form/form-popover";
-import { DEFAULT_ORG_ID } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth";
 
 export const BoardList = async () => {
-  const boards = await db.board.findMany({
-    where: {
-      orgId: DEFAULT_ORG_ID,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // For admins: show all boards
+  // For regular users: show only boards they created (userId matches)
+  let boards;
+  
+  if (user.role === "admin") {
+    // Admins can see all boards
+    boards = await db.board.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  } else {
+    // Regular users only see their own boards
+    boards = await db.board.findMany({
+      where: {
+        userId: user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -23,6 +44,12 @@ export const BoardList = async () => {
         Your boards
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {boards.length === 0 && (
+          <div className="col-span-full text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+            <p className="font-medium">No boards yet</p>
+            <p className="text-sm mt-1">Create your first board to get started!</p>
+          </div>
+        )}
         {boards.map((board) => (
           <Link
             key={board.id}
@@ -51,10 +78,6 @@ export const BoardList = async () => {
 BoardList.Skeleton = function SkeletonBoardList() {
   return (
     <div className="grid gird-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      <Skeleton className="aspect-video h-full w-full p-2" />
-      <Skeleton className="aspect-video h-full w-full p-2" />
-      <Skeleton className="aspect-video h-full w-full p-2" />
-      <Skeleton className="aspect-video h-full w-full p-2" />
       <Skeleton className="aspect-video h-full w-full p-2" />
       <Skeleton className="aspect-video h-full w-full p-2" />
       <Skeleton className="aspect-video h-full w-full p-2" />

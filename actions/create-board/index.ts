@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { createSafeAction } from "@/lib/create-safe-action";
 import { DEFAULT_ORG_ID } from "@/lib/constants";
+import { getCurrentUser } from "@/lib/auth";
 
 import { InputType, ReturnType } from "./types";
 import { CreateBoard } from "./schema";
@@ -13,6 +14,15 @@ import { createAuditLog } from "@/lib/create-audit-log";
 import { ACTION, ENTITY_TYPE } from "@prisma/client";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
+  // Get current user to associate board with them
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    return {
+      error: "Unauthorized. Please login to create a board.",
+    };
+  }
+
   const { title, image } = data;
 
   const [imageId, imageThumbUrl, imageFullUrl, imageLinkHTML, imageUserName] =
@@ -37,6 +47,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       data: {
         title,
         orgId: DEFAULT_ORG_ID,
+        userId: user.id, // Associate board with the creator
         imageId,
         imageThumbUrl,
         imageFullUrl,

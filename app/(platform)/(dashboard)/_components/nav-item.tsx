@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import { Activity, CreditCard, Layout, Settings } from "lucide-react";
+import { Activity, CreditCard, Layout } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -70,19 +70,13 @@ export const NavItem = ({
       label: "Boards",
       icon: <Layout className="h-4 w-4 mr-2" />,
       href: `/organization/${organization.id}`,
-      roles: ["admin", "user", "guest"], // Everyone can see boards
+      roles: ["admin", "user"], // Only authenticated users can see boards
     },
     {
       label: "Activity",
       icon: <Activity className="h-4 w-4 mr-2" />,
       href: `/organization/${organization.id}/activity`,
-      roles: ["admin", "user"], // Only admin and core users can see full activity
-    },
-    {
-      label: "Settings",
-      icon: <Settings className="h-4 w-4 mr-2" />,
-      href: `/organization/${organization.id}/settings`,
-      roles: ["admin", "user"], // Only admin and core users
+      roles: ["admin", "user"], // Only admin and core users - NO guests
     },
     {
       label: "Billing",

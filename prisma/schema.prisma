@@ -11,6 +11,7 @@ datasource db {
 model Board {
   id            String   @id @default(uuid())
   orgId         String
+  userId        String?  // Owner of the board (null = shared/legacy boards)
   title         String
   imageId       String
   imageThumbUrl String   @db.Text
@@ -20,6 +21,9 @@ model Board {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lists         List[]
+  user          User?    @relation("UserBoards", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
 }
 
 model List {
@@ -66,6 +70,7 @@ model User {
   createdAt             DateTime @default(now())
   assignedCards         Card[]   @relation("AssignedCards")
   notifications         Notification[]
+  boards                Board[]  @relation("UserBoards")
 }
 
 model AuditLog {

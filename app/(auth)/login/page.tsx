@@ -10,42 +10,51 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async (e: any) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setIsLoading(true);
 
         // Basic validation
         if (!email || !password) {
             setError("Please fill in all fields");
+            setIsLoading(false);
             return;
         }
 
         if (!email.includes("@")) {
             setError("Please enter a valid email address");
+            setIsLoading(false);
             return;
         }
 
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-        });
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-        const data = await response.json();
-        if (!response.ok) {
-            setError(data.message || "Login failed");
-            return;
-        } else {
-            // Cookie is now set server-side in /api/login for security (httpOnly)
-            router.push("/organization/default-org");
+            const data = await response.json();
+            if (!response.ok) {
+                setError(data.message || "Login failed");
+                setIsLoading(false);
+                return;
+            }
+            
+            // Always redirect to main dashboard - admins can access admin via sidebar
+            router.push('/organization/default-org');
+        } catch (err) {
+            setError("Network error. Please try again.");
+            setIsLoading(false);
         }
     };
 
     return (
-
         <div className="flex flex-col items-center justify-center screen-height py-12 px-4 sm:px-6 lg:px-8">
             <h2 className="text-5xl mb-6">Sign In</h2>
 
@@ -60,6 +69,7 @@ function Login() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
                         required
+                        disabled={isLoading}
                     />
 
                     <label htmlFor="password" className="form-label">Password</label>
@@ -71,6 +81,7 @@ function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
                         required
+                        disabled={isLoading}
                     />
                 </div>
 
@@ -87,8 +98,12 @@ function Login() {
                 </div>
 
                 <div className="text-center mt-5 mb-4">
-                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Sign In
+                    <button 
+                        type="submit" 
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Signing In..." : "Sign In"}
                     </button>
                 </div>
             </form>

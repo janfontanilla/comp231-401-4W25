@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/lib/fetcher";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon, X, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -29,15 +28,18 @@ export const UserSelector = ({
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ["admin-users"],
-    queryFn: () => fetcher("/api/admin/users"),
+  const { data: users, isLoading, error } = useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: () => fetcher("/api/users"),
   });
 
-  const selectedUser = users?.find((u) => u.id === value);
+  // Safety check: ensure users is an array
+  const userList = Array.isArray(users) ? users : [];
+
+  const selectedUser = userList.find((u) => u.id === value);
 
   // Filter users by search
-  const filteredUsers = users?.filter(
+  const filteredUsers = userList.filter(
     (user) =>
       user.name.toLowerCase().includes(search.toLowerCase()) ||
       user.email.toLowerCase().includes(search.toLowerCase())
@@ -56,6 +58,21 @@ export const UserSelector = ({
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
+  }
+
+  // Handle error or empty user list gracefully
+  if (error || userList.length === 0) {
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium flex items-center gap-1">
+          <UserIcon className="h-4 w-4" />
+          Assigned To
+        </label>
+        <div className="flex h-10 w-full items-center rounded-md border border-input bg-gray-50 px-3 py-2 text-sm text-muted-foreground">
+          {error ? "Unable to load users" : "No users available"}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -134,7 +151,7 @@ export const UserSelector = ({
                 {!value && <Check className="h-4 w-4 text-blue-500 ml-auto" />}
               </div>
 
-              {filteredUsers?.map((user) => (
+              {filteredUsers.map((user) => (
                 <div
                   key={user.id}
                   onClick={() => {
@@ -166,7 +183,7 @@ export const UserSelector = ({
                 </div>
               ))}
 
-              {filteredUsers?.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <p className="px-3 py-4 text-sm text-gray-500 text-center">
                   No users found
                 </p>
@@ -178,4 +195,3 @@ export const UserSelector = ({
     </div>
   );
 };
-

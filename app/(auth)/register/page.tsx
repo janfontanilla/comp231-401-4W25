@@ -7,7 +7,6 @@ import "./_components/Register.css";
 
 function Register() {
     const router = useRouter();
-    const [message, setMessage] = useState("");
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -15,8 +14,9 @@ function Register() {
         confirmPassword: "",
     });
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -24,48 +24,63 @@ function Register() {
         setError(""); // Clear error when user types
     };
 
-    const handleSubmit = async (e: any) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setIsLoading(true);
 
         // Validation
         if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
             setError("Please fill in all fields");
+            setIsLoading(false);
             return;
         }
 
         if (!formData.email.includes("@")) {
             setError("Please enter a valid email address");
+            setIsLoading(false);
             return;
         }
 
         if (formData.password.length < 6) {
             setError("Password must be at least 6 characters long");
+            setIsLoading(false);
             return;
         }
 
         if (formData.password !== formData.confirmPassword) {
             setError("Passwords do not match");
+            setIsLoading(false);
             return;
         }
 
-        const name = formData.name;;
-        const email = formData.email;
-        const password = formData.password;
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    name: formData.name, 
+                    email: formData.email, 
+                    password: formData.password 
+                }),
+            });
 
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name, email, password }),
-        });
+            const data = await response.json();
 
-        const data = await response.json();
-        setMessage(data.message);
+            if (!response.ok) {
+                // Show the specific error from API (e.g., "An account with this email already exists")
+                setError(data.message || "Registration failed");
+                setIsLoading(false);
+                return;
+            }
 
-        if (response.ok) {
-            router.push("/organization/default-org");
+            // Success - redirect to login
+            router.push("/login?registered=true");
+        } catch (err) {
+            setError("Network error. Please try again.");
+            setIsLoading(false);
         }
     };
 
@@ -85,6 +100,7 @@ function Register() {
                         onChange={handleChange}
                         placeholder="Enter your full name"
                         required
+                        disabled={isLoading}
                     />
 
                     <label htmlFor="email" className="form-label">Email</label>
@@ -97,6 +113,7 @@ function Register() {
                         onChange={handleChange}
                         placeholder="Enter your email"
                         required
+                        disabled={isLoading}
                     />
 
                     <label htmlFor="password" className="form-label">Password</label>
@@ -107,8 +124,9 @@ function Register() {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Create a password"
+                        placeholder="Create a password (6+ chars)"
                         required
+                        disabled={isLoading}
                     />
                     <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
                     <input
@@ -120,18 +138,23 @@ function Register() {
                         onChange={handleChange}
                         placeholder="Confirm your password"
                         required
+                        disabled={isLoading}
                     />
                 </div>
 
                 {error && (
-                    <div className="alert alert-danger" role="alert">
+                    <div className="text-xs text-red-700 text-center mt-4 p-2 bg-red-50 rounded" role="alert">
                         {error}
                     </div>
                 )}
 
                 <div className="text-center mt-5 mb-4">
-                    <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Sign Up
+                    <button 
+                        type="submit" 
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Creating Account..." : "Sign Up"}
                     </button>
                 </div>
             </form>
