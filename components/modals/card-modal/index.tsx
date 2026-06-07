@@ -10,6 +10,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Header } from "./header";
 import { Description } from "./description";
 import { Actions } from "./actions";
+import { DueDate } from "./due-date";
+import { Attachments } from "./attachments";
 
 import { AuditLog } from "@prisma/client";
 import { Activity } from "./activity";
@@ -40,6 +42,12 @@ export const CardModal = () => {
                 <Description.Skeleton />
               ) : (
                 <Description data={cardData} />
+              )}
+              {!cardData ? <DueDate.Skeleton /> : <DueDate data={cardData} />}
+              {!cardData ? (
+                <Attachments.Skeleton />
+              ) : (
+                <Attachments data={cardData} />
               )}
               {!auditLogsData ? (
                 <Activity.Skeleton />

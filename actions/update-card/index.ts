@@ -28,6 +28,9 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       },
       data: {
         ...values,
+        // When the due date changes, reset the reminder flag so a deadline
+        // email can fire again for the new date.
+        ...("dueDate" in values && { notifiedAt: null }),
       },
     });
 

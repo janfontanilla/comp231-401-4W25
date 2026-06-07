@@ -30,6 +30,11 @@ export async function GET(
             email: true,
           },
         },
+        attachments: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 

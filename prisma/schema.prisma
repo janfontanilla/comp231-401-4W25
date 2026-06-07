@@ -3,21 +3,20 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Board {
   id            String   @id @default(uuid())
   orgId         String
-  userId        String?  // Owner of the board (null = shared/legacy boards)
+  userId        String? // Owner of the board (null = shared/legacy boards)
   title         String
   imageId       String
-  imageThumbUrl String   @db.Text
-  imageFullUrl  String   @db.Text
-  imageUserName String   @db.Text
-  imageLinkHTML String   @db.Text
+  imageThumbUrl String
+  imageFullUrl  String
+  imageUserName String
+  imageLinkHTML String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lists         List[]
@@ -40,37 +39,54 @@ model List {
 }
 
 model Card {
-  id           String    @id @default(uuid())
+  id           String       @id @default(uuid())
   title        String
-  description  String?   @db.Text
+  description  String?
   order        Int
   listId       String
   assignedToId String?
   dueDate      DateTime? // Deadline for notifications
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  list         List      @relation(fields: [listId], references: [id], onDelete: Cascade)
-  assignedTo   User?     @relation("AssignedCards", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notifiedAt   DateTime? // When a deadline reminder email was sent (dedupe)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  list         List         @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignedTo   User?        @relation("AssignedCards", fields: [assignedToId], references: [id], onDelete: SetNull)
+  attachments  Attachment[]
 
   @@index([listId])
   @@index([assignedToId])
   @@index([dueDate])
 }
 
+// File attachments on cards (stored in Cloudinary; DB holds only metadata)
+model Attachment {
+  id        String   @id @default(uuid())
+  cardId    String
+  name      String // Original filename
+  url       String // Cloudinary secure_url
+  publicId  String // Cloudinary public_id (used for deletes)
+  bytes     Int // File size in bytes
+  format    String? // File extension/format (pdf, png, ...)
+  createdAt DateTime @default(now())
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}
+
 model User {
-  id                    String   @id @default(uuid())
-  email                 String   @unique
-  password              String
-  name                  String
-  role                  String   @default("user")
-  notifyEmail           Boolean  @default(true)  // Email notifications
-  notifyInApp           Boolean  @default(true)  // In-app notifications
-  notifyDeadlines       Boolean  @default(true)  // Deadline reminders
-  notifyAssignments     Boolean  @default(true)  // Assignment notifications
-  createdAt             DateTime @default(now())
-  assignedCards         Card[]   @relation("AssignedCards")
-  notifications         Notification[]
-  boards                Board[]  @relation("UserBoards")
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password          String
+  name              String
+  role              String         @default("user")
+  notifyEmail       Boolean        @default(true) // Email notifications
+  notifyInApp       Boolean        @default(true) // In-app notifications
+  notifyDeadlines   Boolean        @default(true) // Deadline reminders
+  notifyAssignments Boolean        @default(true) // Assignment notifications
+  createdAt         DateTime       @default(now())
+  assignedCards     Card[]         @relation("AssignedCards")
+  notifications     Notification[]
+  boards            Board[]        @relation("UserBoards")
 }
 
 model AuditLog {
@@ -81,27 +97,10 @@ model AuditLog {
   entityType  ENTITY_TYPE
   entityTitle String
   userId      String
-  userImage   String      @db.Text
-  userName    String      @db.Text
+  userImage   String
+  userName    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-}
-
-model OrgLimit {
-  id        String   @id @default(uuid())
-  orgId     String   @unique
-  count     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model OrgSubscription {
-  id                     String    @id @default(uuid())
-  orgId                  String    @unique
-  stripeCustomerId       String?   @unique @map("stripe_customer_id")
-  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
-  stripePriceId          String?   @map("stripe_price_id")
-  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
 }
 
 enum ACTION {
@@ -119,11 +118,11 @@ enum ENTITY_TYPE {
 // Comments/Questions on boards
 model Comment {
   id        String   @id @default(uuid())
-  text      String   @db.Text
+  text      String
   name      String
   boardId   String
   createdAt DateTime @default(now())
-  
+
   @@index([boardId])
 }
 
@@ -134,55 +133,55 @@ model PasswordResetToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
+
   @@index([email])
   @@index([token])
 }
 
 // Guest invite links (GR1-GR3)
 model GuestInvite {
-  id          String   @id @default(uuid())
-  token       String   @unique
-  email       String?  // Optional email to restrict invite
-  boardId     String?  // Optional: restrict to specific board
-  createdBy   String   // Admin who created the invite
-  expiresAt   DateTime
-  maxUses     Int      @default(1)
-  usedCount   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String? // Optional email to restrict invite
+  boardId   String? // Optional: restrict to specific board
+  createdBy String // Admin who created the invite
+  expiresAt DateTime
+  maxUses   Int      @default(1)
+  usedCount Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
   @@index([token])
   @@index([createdBy])
 }
 
 // Guest feedback submissions (GR1-GR3)
 model GuestFeedback {
-  id          String   @id @default(uuid())
-  guestName   String
-  guestEmail  String?
-  boardId     String?
-  feedback    String   @db.Text
-  rating      Int?     // Optional 1-5 rating
-  status      String   @default("pending") // pending, reviewed, resolved
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(uuid())
+  guestName  String
+  guestEmail String?
+  boardId    String?
+  feedback   String
+  rating     Int? // Optional 1-5 rating
+  status     String   @default("pending") // pending, reviewed, resolved
+  createdAt  DateTime @default(now())
+
   @@index([boardId])
   @@index([status])
 }
 
 // System notifications (SR3)
 model Notification {
-  id          String   @id @default(uuid())
-  userId      String
-  type        String   // deadline, assignment, system, question
-  title       String
-  message     String   @db.Text
-  link        String?  // Optional link to related item
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // deadline, assignment, system, question
+  title     String
+  message   String
+  link      String? // Optional link to related item
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([isRead])
   @@index([type])
@@ -190,17 +189,17 @@ model Notification {
 
 // Access logging for security
 model AccessLog {
-  id          String   @id @default(uuid())
-  userId      String?  // Null if not authenticated
-  userEmail   String?
-  action      String   // login, logout, access_denied, admin_access, etc.
-  resource    String   // The resource being accessed
-  ipAddress   String?
-  userAgent   String?  @db.Text
-  success     Boolean
-  message     String?
-  createdAt   DateTime @default(now())
-  
+  id        String   @id @default(uuid())
+  userId    String? // Null if not authenticated
+  userEmail String?
+  action    String // login, logout, access_denied, admin_access, etc.
+  resource  String // The resource being accessed
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  message   String?
+  createdAt DateTime @default(now())
+
   @@index([userId])
   @@index([action])
   @@index([createdAt])

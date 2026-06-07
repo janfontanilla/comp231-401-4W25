@@ -22,5 +22,6 @@ export const UpdateCard = z.object({
         message: "Title is too short",
       })
   ),
+  dueDate: z.optional(z.coerce.date().nullable()),
   id: z.string(),
 });

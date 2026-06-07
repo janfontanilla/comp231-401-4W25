@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { sendDeadlineEmail } from '@/lib/email';
 
 export type NotificationType = 'deadline' | 'assignment' | 'system' | 'question';
 
@@ -70,7 +71,7 @@ export async function createBulkNotifications(
 export async function checkDeadlines() {
   const now = new Date();
   const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const in1Hour = new Date(now.getTime() + 60 * 60 * 1000);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
 
   try {
     // Find cards with deadlines in the next 24 hours that haven't been notified
@@ -91,6 +92,7 @@ export async function checkDeadlines() {
     });
 
     const notifications = [];
+    let emailsSent = 0;
 
     for (const card of upcomingCards) {
       if (!card.assignedTo || !card.dueDate) continue;
@@ -113,23 +115,54 @@ export async function checkDeadlines() {
         message = `"${card.title}" is due in ${hoursUntilDue} hours`;
       }
 
+      const boardLink = `/board/${card.list.board.id}`;
+
       const notification = await createNotification({
         userId: card.assignedTo.id,
         type: 'deadline',
         title,
         message,
-        link: `/board/${card.list.board.id}`,
+        link: boardLink,
       });
 
       if (notification) {
         notifications.push(notification);
       }
+
+      // Send a deadline reminder email once per due date (deduped via notifiedAt).
+      const user = card.assignedTo;
+      if (
+        !card.notifiedAt &&
+        user.email &&
+        user.notifyEmail &&
+        user.notifyDeadlines
+      ) {
+        const sent = await sendDeadlineEmail({
+          to: user.email,
+          cardTitle: card.title,
+          dueDate: card.dueDate,
+          link: `${appUrl}${boardLink}`,
+        });
+
+        if (sent) {
+          emailsSent += 1;
+          // Stamp the card so we don't email again for this deadline.
+          await db.card.update({
+            where: { id: card.id },
+            data: { notifiedAt: now },
+          });
+        }
+      }
     }
 
-    return { checked: upcomingCards.length, notified: notifications.length };
+    return {
+      checked: upcomingCards.length,
+      notified: notifications.length,
+      emailsSent,
+    };
   } catch (error) {
     console.error('[CHECK_DEADLINES_ERROR]', error);
-    return { checked: 0, notified: 0, error: String(error) };
+    return { checked: 0, notified: 0, emailsSent: 0, error: String(error) };
   }
 }
 
