@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Public routes that don't require authentication
 const publicRoutes = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/guest/join"];
-const publicApiRoutes = ["/api/login", "/api/register", "/api/password-reset", "/api/guest/invite/validate", "/api/guest/feedback", "/api/cron"];
+const publicApiRoutes = ["/api/login", "/api/register", "/api/password-reset", "/api/guest/invite/validate", "/api/guest/feedback", "/api/cron", "/api/inbound-email"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

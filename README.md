@@ -34,6 +34,7 @@ MyTracker is a Trello-style board app: create boards with lists and cards to org
 - **File attachments** on cards (stored in Cloudinary)
 - **Email deadline reminders** (sent by a daily cron job)
 - In-app notifications and activity logs
+- **Email-to-Board**: forwarded emails become cards (with their PDF attachments saved)
 - Admin dashboard, guest invites/feedback
 
 ## Prerequisites
@@ -69,6 +70,7 @@ cp .env.example .env
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | File uploads |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Deadline reminder emails |
 | `CRON_SECRET` | Protects the cron endpoint (`openssl rand -hex 32`) |
+| `INBOUND_EMAIL_SECRET` | Protects the email-to-board webhook (`openssl rand -hex 32`) |
 | `NEXT_PUBLIC_UNSPLASH_ACCESS_KEY` | Cover images (optional) |
 
 ### 3. Create the database schema
@@ -116,6 +118,44 @@ You can trigger a check manually for testing:
 ```bash
 curl -X POST https://<your-app>/api/cron/check-deadlines
 ```
+
+## Email-to-Board (auto-import emails as cards)
+
+Forwarded emails are turned into cards on an auto-created **"Email Inbox"** board
+(in an **"Inbox"** list), and any attachments (PDFs, etc.) are saved to Cloudinary
+and attached to the card. Imports are deduplicated by the email's `Message-ID`.
+
+Setup uses a free inbound-email provider so you don't need your own domain:
+
+1. **Sign up at [CloudMailin](https://www.cloudmailin.com)** (free tier; alternatives:
+   Postmark, Pingram). You'll get a ready-to-use parse address, e.g.
+   `something@cloudmailin.net`.
+2. **Point the provider at the webhook.** Set its POST target to:
+   ```
+   https://<your-app>/api/inbound-email?secret=<INBOUND_EMAIL_SECRET>
+   ```
+   Use the **multipart (normalized)** format. (The webhook also accepts JSON.)
+3. **Generate `INBOUND_EMAIL_SECRET`** (`openssl rand -hex 32`) and add it to your
+   `.env` and Vercel env vars.
+4. **Forward your course emails to the parse address.** In Outlook (Centennial
+   M365), create a rule: *from contains `brightspace` (or `luminate`) → forward to*
+   the CloudMailin address.
+   > If your school disables external auto-forwarding, just forward the emails you
+   > want manually — the webhook treats both the same way.
+
+Test it locally without a provider (multipart POST with a file):
+
+```bash
+curl -X POST "http://localhost:3000/api/inbound-email?secret=$INBOUND_EMAIL_SECRET" \
+  -F "from=Brightspace <noreply@brightspace.com>" \
+  -F "subject=Week 1 Lecture Notes" \
+  -F "plain=See attached." \
+  -F "headers=Message-ID: <test-123@brightspace.com>" \
+  -F "attachments[0]=@/path/to/notes.pdf"
+```
+
+A card titled "Week 1 Lecture Notes" should appear in the Email Inbox board with
+the PDF attached. Re-running the same command returns `{ "skipped": true }`.
 
 ## Available Scripts
 

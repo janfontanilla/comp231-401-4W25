@@ -58,6 +58,19 @@ model Card {
   @@index([dueDate])
 }
 
+// Emails imported into the board via the inbound-email webhook.
+// Used to deduplicate provider retries (one row per email Message-ID).
+model InboundEmail {
+  id        String   @id @default(uuid())
+  messageId String   @unique // RFC 5322 Message-ID header
+  fromEmail String
+  subject   String
+  cardId    String? // Card created from this email
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
+}
+
 // File attachments on cards (stored in Cloudinary; DB holds only metadata)
 model Attachment {
   id        String   @id @default(uuid())
