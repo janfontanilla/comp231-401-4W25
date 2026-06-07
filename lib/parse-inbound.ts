@@ -60,8 +60,11 @@ export function extractMessageId(
   const direct = pick(fields, [
     "message-id",
     "messageid",
-    "headers[message-id]",
     "message_id",
+    // CloudMailin normalized: headers[message_id]; raw multipart: headers[Message-ID]
+    "headers[message_id]",
+    "headers[message-id]",
+    "headers[Message-ID]",
   ]);
   if (direct) return direct.replace(/[<>]/g, "").trim();
 
@@ -100,13 +103,15 @@ export function parseInboundEmail(
   const fromRaw = pick(fields, [
     "from",
     "sender",
+    "headers[from]",
     "envelope[from]",
     "fromfull",
     "From",
   ]);
   const fromEmail = extractEmailAddress(fromRaw);
 
-  const subject = pick(fields, ["subject", "Subject"]) || "(no subject)";
+  const subject =
+    pick(fields, ["subject", "headers[subject]", "Subject"]) || "(no subject)";
 
   const plain = pick(fields, ["plain", "text", "body-plain", "TextBody"]);
   const html = pick(fields, ["html", "body-html", "HtmlBody"]);

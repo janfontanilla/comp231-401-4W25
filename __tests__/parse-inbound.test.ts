@@ -106,6 +106,21 @@ describe("parseInboundEmail", () => {
     expect(result.bodyText.length).toBe(MAX_BODY_CHARS);
   });
 
+  test("normalizes CloudMailin bracketed headers[...] fields", () => {
+    const result = parseInboundEmail(
+      {
+        "headers[from]": "Jan <janfontanilla12@gmail.com>",
+        "headers[subject]": "Test",
+        "headers[message_id]": "<CAKJibLe@mail.gmail.com>",
+        plain: "hello",
+      },
+      []
+    );
+    expect(result.fromEmail).toBe("janfontanilla12@gmail.com");
+    expect(result.subject).toBe("Test");
+    expect(result.messageId).toBe("CAKJibLe@mail.gmail.com");
+  });
+
   test("passes attachments through", () => {
     const result = parseInboundEmail({ from: "a@b.com", subject: "s" }, [
       { filename: "notes.pdf", buffer: Buffer.from("pdf") },
